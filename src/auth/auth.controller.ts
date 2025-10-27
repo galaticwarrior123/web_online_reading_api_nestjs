@@ -43,7 +43,6 @@ export class AuthController {
     }
 
     @Post('/me')
-    @UseGuards(AuthGuard)
     async getMe(@Body('token') token: string) {
         return this.authService.findUserByToken(token);
     }

@@ -5,8 +5,23 @@ import { HydratedDocument } from "mongoose";
 
 @Schema({ timestamps: true })
 export class Settings extends BaseSchema {
-    @Prop({ type: String, required: true })
+    @Prop({ type: String, default:null })
     logo: string;
+
+    @Prop({ type: String, default:null })
+    iconLogo: string;
+
+    @Prop({ type: String, default:null })
+    nameWebsite: string;
+
+    @Prop({ type: String, default:null })
+    descriptionWebsite: string;
+
+    @Prop({ type: String, default:null })
+    emailWebsite: string;
+
+    @Prop({ type: String, default:null })
+    phoneWebsite: string;
 
 }
 
