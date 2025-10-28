@@ -146,16 +146,42 @@ export class AuthService {
             throw new Error("User not found");
         }
 
-        isBanned === true ? user.isActive = true : user.isActive = false;
-
+        user.isActive = !isBanned;
         await user.save();
 
         return user;
     }
 
+
+    async createUser(userData: Partial<User>) {
+        const user = new this.userModel(userData);
+        const salt = await bcrypt.genSalt(10);
+        const randomPassword = this.randomPassword();
+        user.password = await bcrypt.hash(randomPassword, salt);
+        user.isActive = true;
+        user.userName = userData.userName || `user${Date.now()}`;
+
+        this.mailerService.sendMail({
+            to: user.email,
+            subject: 'Your account has been created',
+            text: `Your account has been created. Your password is ${randomPassword}`
+        });
+
+        return user.save();
+    }
+
     generateActiveCode() {
         const random = Math.floor(100000 + Math.random() * 900000);
         return random.toString();
+    }
+
+    randomPassword() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let password = '';
+        for (let i = 0; i < 6; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return password;
     }
 
 }

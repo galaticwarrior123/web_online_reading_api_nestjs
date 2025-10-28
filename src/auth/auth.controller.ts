@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dtos/register.dto';
 import { VerifyDto } from './dtos/verify.dto';
 import { LoginDto } from './dtos/login.dto';
-import { UserRole } from 'src/schemas/user.schema';
+import { User, UserRole } from 'src/schemas/user.schema';
 import { AuthGuard } from './auth.guard';
 
 @Controller('api/auth')
@@ -45,6 +45,11 @@ export class AuthController {
     @Post('/me')
     async getMe(@Body('token') token: string) {
         return this.authService.findUserByToken(token);
+    }
+
+    @Post('create-user')
+    async createUser(@Body() userData: Partial<any>) {
+        return this.authService.createUser(userData);
     }
 
     @Put('/updateProfile/:id')
