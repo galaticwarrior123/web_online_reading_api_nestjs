@@ -21,6 +21,7 @@ export class NewsController {
 
     @Get('slug/:slug')
     async getNewsBySlug(@Param('slug') slug: string) {
+        console.log('Slug received:', slug);
         return this.newsService.findBySlug(slug);
     }
 
@@ -30,7 +31,6 @@ export class NewsController {
     }
 
     @Put('view/:slug')
-    @UseGuards(AuthGuard)
     async incrementNewsViews(@Param('slug') slug: string) {
         await this.newsService.incrementViews(slug);
         return { message: 'View count incremented' };

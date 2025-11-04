@@ -90,7 +90,7 @@ export class NewsService {
         // Nếu là bài viết
         if (parsedUrl && parsedUrl.type === "article") {
             return this.newsModel
-                .findOne({ slug, status: "published" })
+                .findOne({ slug })
                 .populate("category")
                 .populate("author", "userName")
                 .exec();
@@ -232,6 +232,21 @@ export class NewsService {
                     time: new Date().toLocaleString(),
                 });
             }
+        }
+
+        if (updateStatusDto.status === "rejected") {
+            // Handle rejection logic here
+            const authorId = updatedNews?.author && (updatedNews.author as any)._id
+                ? (updatedNews.author as any)._id.toString()
+                : null;
+            if (authorId) {
+                this.notificationGateway.sendToUser(authorId, {
+                    title: 'Bài viết của bạn bị từ chối vì: ' + (reason || 'Không có lý do cụ thể'),
+                    sender: approvedBy,
+                    time: new Date().toLocaleString(),
+                });
+            }
+
         }
 
         if (updateStatusDto.status === "pending") {
