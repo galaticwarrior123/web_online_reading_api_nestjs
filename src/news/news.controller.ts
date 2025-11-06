@@ -21,7 +21,6 @@ export class NewsController {
 
     @Get('slug/:slug')
     async getNewsBySlug(@Param('slug') slug: string) {
-        console.log('Slug received:', slug);
         return this.newsService.findBySlug(slug);
     }
 

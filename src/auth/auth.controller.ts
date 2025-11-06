@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dtos/register.dto';
 import { VerifyDto } from './dtos/verify.dto';
@@ -10,7 +10,7 @@ import { AuthGuard } from './auth.guard';
 export class AuthController {
     constructor(
         private readonly authService: AuthService,
-    ) {}
+    ) { }
 
     @Get('/all-users')
     async getAllUsers() {
@@ -38,7 +38,7 @@ export class AuthController {
     }
 
     @Post('/resetPassword')
-    async resetPassword(@Body('email') email: string, @Body('newPassword') newPassword: string) {    
+    async resetPassword(@Body('email') email: string, @Body('newPassword') newPassword: string) {
         return this.authService.resetNewPassword(email, newPassword);
     }
 
@@ -66,7 +66,28 @@ export class AuthController {
 
     @Put("/banned/:userId")
     @UseGuards(AuthGuard)
-    async bannedUser(@Param("userId") userId:string, @Body("isBanned") isBanned: boolean){
+    async bannedUser(@Param("userId") userId: string, @Body("isBanned") isBanned: boolean) {
         return this.authService.banUser(userId, isBanned);
     }
+
+    @Get('/register/options')
+    async registerOptions(@Query('email') email: string) {
+        return this.authService.generatePasskeyRegisterOptions(email);
+    }
+
+    @Post('/register/verify')
+    async verifyRegister(@Body() body: any) {
+        return this.authService.verifyPasskeyRegisterResponse(body.email, body.response);
+    }
+
+    @Get('/login/options')
+    async loginOptions(@Query('email') email: string) {
+        return this.authService.generatePasskeyLoginOptions(email);
+    }
+
+    @Post('/login/verify')
+    async verifyLogin(@Body() body: any) {
+        return this.authService.verifyPasskeyLoginResponse(body.email, body.response);
+    }
+
 }

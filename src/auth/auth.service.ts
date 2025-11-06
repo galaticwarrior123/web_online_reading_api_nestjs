@@ -7,6 +7,14 @@ import { RegisterDto } from './dtos/register.dto';
 import * as bcrypt from 'bcrypt';
 import { MailerService } from '@nestjs-modules/mailer';
 import { LoginDto } from './dtos/login.dto';
+import {
+    generateRegistrationOptions,
+    verifyRegistrationResponse,
+    generateAuthenticationOptions,
+    verifyAuthenticationResponse,
+    AuthenticatorTransportFuture
+} from '@simplewebauthn/server';
+
 
 @Injectable()
 export class AuthService {
@@ -169,6 +177,112 @@ export class AuthService {
 
         return user.save();
     }
+
+
+    // --- Passkey Register ---
+    async generatePasskeyRegisterOptions(email: string) {
+        const user = await this.userModel.findOne({ email });
+        if (!user) throw new Error('User not found');
+
+        const options = await generateRegistrationOptions({
+            rpName: process.env.NAME_APP || 'My App',
+            rpID: process.env.DOMAIN_NAME || 'localhost',
+            userName: user.userName,
+            // See "Guiding use of authenticators via authenticatorSelection" below
+            authenticatorSelection: {
+                // Defaults
+                residentKey: 'preferred',
+                userVerification: 'preferred',
+                // Optional
+                authenticatorAttachment: 'platform',
+            },
+        });
+
+        user.currentChallenge = options.challenge;
+        await user.save();
+
+        return options;
+    }
+
+    async verifyPasskeyRegisterResponse(email: string, response: any) {
+        const user = await this.userModel.findOne({ email });
+        if (!user) throw new Error('User not found');
+        if (!user.currentChallenge) throw new Error('No challenge found');
+
+        const verification = await verifyRegistrationResponse({
+            response,
+            expectedChallenge: user.currentChallenge,
+            expectedOrigin: process.env.LINK_CLIENT || 'http://localhost:3000', // domain frontend
+            expectedRPID: process.env.DOMAIN_NAME || 'localhost',
+        });
+
+        if (verification.verified) {
+            const info = verification.registrationInfo;
+            user.passkey = {
+                credentialID: info.credential.id,
+                publicKey: info.credential.publicKey,
+                counter: info.credential.counter,
+                transports: info.credential.transports as AuthenticatorTransportFuture[] | undefined,
+            };
+            await user.save();
+        }
+        user.currentChallenge = '';
+        await user.save();
+        return verification;
+    }
+
+    // --- Passkey Login ---
+    async generatePasskeyLoginOptions(email: string) {
+        const user = await this.userModel.findOne({ email });
+        if (!user || !user.passkey) throw new Error('User not found or no passkey');
+
+        const options = await generateAuthenticationOptions({
+            rpID: process.env.DOMAIN_NAME || 'localhost',
+            allowCredentials: [{
+                id: user.passkey.credentialID,
+                transports: user.passkey.transports as AuthenticatorTransportFuture[] | undefined,
+            }],
+        });
+        user.currentChallenge = options.challenge;
+        await user.save();
+        return options;
+    }
+
+    async verifyPasskeyLoginResponse(email: string, response: any) {
+        const user = await this.userModel.findOne({ email });
+        if (!user || !user.passkey) throw new Error('User not found or no passkey');
+        if (!user.currentChallenge) throw new Error('No challenge found');
+
+        // ✅ Decode lại publicKey từ MongoDB Binary
+        const publicKeyBuffer = user.passkey.publicKey.buffer as ArrayBuffer;
+        const publicKeyUint8 = new Uint8Array(publicKeyBuffer);
+
+        const verification = await verifyAuthenticationResponse({
+            response,
+            expectedChallenge: user.currentChallenge,
+            expectedOrigin: process.env.LINK_CLIENT || 'http://localhost:3000',
+            expectedRPID: process.env.DOMAIN_NAME || 'localhost',
+            credential: {
+                id: user.passkey.credentialID,
+                publicKey: publicKeyUint8,
+                counter: user.passkey.counter,
+                transports: user.passkey.transports as AuthenticatorTransportFuture[] | undefined,
+            },
+        });
+
+
+
+        if (verification.verified) {
+            user.passkey.counter = verification.authenticationInfo.newCounter;
+            await user.save();
+            const token = this.jwtService.sign({ id: user._id, role: user.role });
+            return { verified: true, token };
+        }
+        user.currentChallenge = '';
+        await user.save();
+        return { verified: false };
+    }
+
 
     generateActiveCode() {
         const random = Math.floor(100000 + Math.random() * 900000);
