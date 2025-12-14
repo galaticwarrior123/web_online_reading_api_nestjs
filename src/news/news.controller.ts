@@ -10,8 +10,8 @@ import { AuthGuard } from 'src/auth/auth.guard';
 export class NewsController {
     constructor(private newsService: NewsService) { }
     @Get('all')
-    async getAllNews() {
-        return this.newsService.getAllNews();
+    async getAllNews(@Query('page') page: number, @Query('limit') limit: number) {
+        return this.newsService.getAllNews(page, limit);
     }
 
     @Get('search')
@@ -59,8 +59,8 @@ export class NewsController {
     }
 
     @Get('author/:authorId')
-    async getNewsByAuthor(@Param('authorId') authorId: string) {
-        return this.newsService.getNewsByAuthor(authorId);
+    async getNewsByAuthor(@Param('authorId') authorId: string, @Query('page') page: number, @Query('limit') limit: number) {
+        return this.newsService.getNewsByAuthor(authorId, page, limit);
     }
 
 

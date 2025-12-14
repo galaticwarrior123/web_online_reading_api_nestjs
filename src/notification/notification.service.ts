@@ -58,6 +58,7 @@ export class NotificationService {
         const notifications = await this.notificationModel
             .find({ receiver: userId })
             .sort({ createdAt: -1 })
+            .populate('sender', 'userName') // Populate sender field with name
             .lean(); // trả về object JS thay vì Mongoose Document
 
         return notifications;

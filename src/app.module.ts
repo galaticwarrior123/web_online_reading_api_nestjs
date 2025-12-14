@@ -7,16 +7,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { CategoryModule } from './category/category.module';
-import { NewsService } from './news/news.service';
 import { NewsModule } from './news/news.module';
 import { CommentModule } from './comment/comment.module';
 import { TagsService } from './tags/tags.service';
 import { ViewLogModule } from './view-log/view-log.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { SettingsModule } from './settings/settings.module';
-import { NotificationService } from './notification/notification.service';
-import { NotificationController } from './notification/notification.controller';
 import { NotificationModule } from './notification/notification.module';
+import { ImageModule } from './image/image.module';
 
 @Module({
   imports: [
@@ -53,6 +51,7 @@ import { NotificationModule } from './notification/notification.module';
     DashboardModule,
     SettingsModule,
     NotificationModule,
+    ImageModule,
   ],
   controllers: [AppController],
   providers: [AppService, TagsService],

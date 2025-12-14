@@ -180,8 +180,31 @@ export class NewsService {
     }
 
 
-    async getNewsByAuthor(authorId: string): Promise<News[]> {
-        return this.newsModel.find({ author: authorId }).populate('category').populate('author').exec();
+    async getNewsByAuthor(authorId: string, page: number = 1, limit: number = 10) {
+        const skip = (page - 1) * limit;
+
+        const [items, total] = await Promise.all([
+            this.newsModel.find({ author: authorId })
+                .populate('category')
+                .populate('author')
+                .skip(skip)
+                .limit(limit)
+                .sort({
+                    status: 1,
+                    createdAt: -1
+                })
+                .exec(),
+
+            this.newsModel.countDocuments({ author: authorId })
+        ]);
+
+        return {
+            items,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        };
     }
 
 
@@ -267,7 +290,7 @@ export class NewsService {
                 this.notificationGateway.sendToUser(editor._id.toString(), {
                     title: "Có bài viết mới đang chờ duyệt",
                     sender: authorId ?? "system",
-                    time: new Date().toLocaleString(),
+                    createdAt: new Date().toLocaleString(),
                 });
             }
 
@@ -276,7 +299,7 @@ export class NewsService {
                 this.notificationGateway.sendToUser(authorId, {
                     title: "Bài viết của bạn đang được xét duyệt",
                     sender: "system",
-                    time: new Date().toLocaleString(),
+                    createdAt: new Date().toLocaleString(),
                 });
             }
         }
@@ -284,8 +307,28 @@ export class NewsService {
         return updatedNews;
     }
 
-    async getAllNews(): Promise<News[]> {
-        return this.newsModel.find().populate('category').populate('author').exec();
+    async getAllNews(page: number = 1, limit: number = 10) {
+        const skip = (page - 1) * limit;
+        const [items, total] = await Promise.all([
+            this.newsModel.find()
+                .populate('category')
+                .populate('author')
+                .skip(skip)
+                .limit(limit)
+                .sort({
+                    createdAt: -1,
+                    status: 1
+                })
+                .exec(),
+            this.newsModel.countDocuments()
+        ]);
+        return {
+            items,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        }
     }
 
     async highlightIsFeatured(id: string, highlightIsFeaturedDto: HighlightIsFeaturedDto): Promise<News | null> {
