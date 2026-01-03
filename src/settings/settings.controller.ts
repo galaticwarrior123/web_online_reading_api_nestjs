@@ -23,6 +23,7 @@ export class SettingsController {
 
     @Put("update")
     async updateSettings(@Body() updateSettingDto: CreateNewSettingsDto) {
+        console.log(updateSettingDto);
         return this.settingsService.update(updateSettingDto);
     }
 }

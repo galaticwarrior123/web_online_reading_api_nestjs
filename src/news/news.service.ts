@@ -12,12 +12,14 @@ import { OpenAIService } from 'src/openai/openAI.service';
 import { TagsService } from 'src/tags/tags.service';
 import { NotificationGateway } from 'src/notification/notification.gateway';
 import { User } from 'src/schemas/user.schema';
+import { NewsRevision } from 'src/schemas/newsRevision.schema';
 
 @Injectable()
 export class NewsService {
     constructor(
         @InjectModel(News.name) private newsModel: Model<News>,
         @InjectModel(User.name) private userModel: Model<User>,
+        @InjectModel(NewsRevision.name) private newsRevisionModel: Model<NewsRevision>,
         @InjectModel(Category.name) private categoryModel: Model<Category>,
         private readonly tagsService: TagsService,
         private readonly notificationGateway: NotificationGateway
@@ -207,14 +209,62 @@ export class NewsService {
         };
     }
 
+    async getNewsCraft(newsId: string, page: number = 1, limit: number = 10) {
+        const skip = (page - 1) * limit;
+        if (!Types.ObjectId.isValid(newsId)) {
+            return null;
+        }
 
-    async updateNews(id: string, updateData: Partial<CreateNewsDto>): Promise<News | null> {
+        const [item, total] = await Promise.all([
+            this.newsRevisionModel.find({ news: newsId })
+                .populate('news')
+                .populate('category')
+                .skip(skip)
+                .limit(limit)
+                .exec(),
+            this.newsRevisionModel.countDocuments({ news: newsId })
+        ]);
+
+        return {
+            items: item,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        };
+    }
+
+
+    async updateNews(id: string, updateData: Partial<CreateNewsDto>): Promise<News | NewsRevision | null> {
         if (!Types.ObjectId.isValid(id)) {
             return null;
         }
 
-        const updatedNews = await this.newsModel.findByIdAndUpdate(id, updateData, { new: true }).populate('category').populate('author').exec();
-        return updatedNews;
+        //const updatedNews = await this.newsModel.findByIdAndUpdate(id, { ...updateData, updatedAt: new Date() }, { new: true }).populate('category').populate('author').exec();
+
+        const currentNews = await this.newsModel.findById(id).exec();
+        if (!currentNews) {
+            return null;
+        }
+
+        if (currentNews.status !== 'published') {
+            return await this.newsModel.findByIdAndUpdate(
+                id,
+                { ...updateData, updatedAt: new Date() },
+                { new: true }
+            );
+        }
+        return await this.newsRevisionModel.create({
+            news: currentNews._id,
+            title: updateData.title ?? currentNews.title,
+            content: updateData.content ?? currentNews.content,
+            slug: currentNews.slug,
+            status: 'draft',
+            tags: await this.tagsService.extractTags(updateData.title ?? currentNews.title),
+            createdAt: new Date(),
+            category: updateData.category ?? currentNews.category,
+        });
+
     }
 
 
@@ -408,5 +458,23 @@ export class NewsService {
         ).sort({ score: { $meta: "textScore" } });
         return results;
     }
+
+
+    async checkTimeUndoArticle(idUser: string) {
+        const FIFTEEN_MINUTES = 15 * 60 * 1000;
+        const expiredTime = new Date(Date.now() - FIFTEEN_MINUTES);
+
+        await this.newsModel.updateMany(
+            {
+                author: idUser,
+                status: "pending",
+                updatedAt: { $lt: expiredTime },
+            },
+            {
+                $set: { isCanUndo: false },
+            }
+        );
+    }
+
 
 }

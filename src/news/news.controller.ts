@@ -29,6 +29,11 @@ export class NewsController {
         return this.newsService.getFeaturedNews(limit);
     }
 
+    @Put('checkCanUndo/:idUser')
+    async updateListArticleCanUndo(@Param("idUser") idUser:string){
+        return this.newsService.checkTimeUndoArticle(idUser);
+    }
+
     @Put('view/:slug')
     async incrementNewsViews(@Param('slug') slug: string) {
         await this.newsService.incrementViews(slug);
@@ -63,6 +68,10 @@ export class NewsController {
         return this.newsService.getNewsByAuthor(authorId, page, limit);
     }
 
+    @Get('crafts/:newsId')
+    async getNewsCraft(@Param('newsId') newsId: string) {
+        return this.newsService.getNewsCraft(newsId);
+    }
 
     @Put('update/:id')
     async updateNews(@Param('id') id: string, @Body() updateData: Partial<CreateNewsDto>) {

@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { BaseSchema } from "./base.schema";
 import mongoose, { HydratedDocument, Types } from "mongoose";
+import { News } from "./news.schema";
 
 export enum NewsPriority {
     LOW = 0,
@@ -11,15 +12,17 @@ export enum NewsPriority {
 
 
 @Schema({ timestamps: true })
-export class News extends BaseSchema {
+export class NewsRevision extends BaseSchema {
     @Prop({ type: String, required: true, index: true, unique: true })
     slug: string;
     @Prop({ type: String, required: true })
     title: string;
     @Prop({ type: String, required: true })
     content: string;
-    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
-    author: Types.ObjectId;
+    // @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
+    // author: Types.ObjectId;
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'News', required: true })
+    news: Types.ObjectId;
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Category' })
     category: Types.ObjectId;
     @Prop({ type: String })
@@ -54,16 +57,13 @@ export class News extends BaseSchema {
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null })
     approvedBy: Types.ObjectId;
 
-    @Prop({ type: Boolean, default: false })
-    hasPendingDraft: boolean;
-
 }
 
-export const NewsSchema = SchemaFactory.createForClass(News);
-export type NewsDocument = HydratedDocument<News>;
+export const NewsRevisionSchema = SchemaFactory.createForClass(NewsRevision);
+export type NewsRevisionDocument = HydratedDocument<NewsRevision>;
 
 
-NewsSchema.index({
+NewsRevisionSchema.index({
     title: "text",
     summary: "text",
     content: "text", // hoặc "content" nếu bạn chưa tách HTML

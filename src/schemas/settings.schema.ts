@@ -23,6 +23,9 @@ export class Settings extends BaseSchema {
     @Prop({ type: String, default:null })
     phoneWebsite: string;
 
+    @Prop({ type: String, default:null })
+    noImagePreview: string;
+
 }
 
 export const SettingsSchema = SchemaFactory.createForClass(Settings);

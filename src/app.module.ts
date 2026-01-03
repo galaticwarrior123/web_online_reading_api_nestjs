@@ -15,6 +15,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { SettingsModule } from './settings/settings.module';
 import { NotificationModule } from './notification/notification.module';
 import { ImageModule } from './image/image.module';
+import { NewsRevisionModule } from './news-revision/news-revision.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { ImageModule } from './image/image.module';
     SettingsModule,
     NotificationModule,
     ImageModule,
+    NewsRevisionModule,
   ],
   controllers: [AppController],
   providers: [AppService, TagsService],

@@ -26,4 +26,8 @@ export class CreateNewSettingsDto {
     @IsString()
     @IsOptional()
     phoneWebsite: string;
+
+    @IsString()
+    @IsOptional()
+    noImagePreview: string;
 }
