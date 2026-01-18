@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseBoolPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { NewsService } from './news.service';
 import { CreateNewsDto } from './dtos/createNews.dto';
 import { UpdateStatusDto } from './dtos/updateStatus.dto';
@@ -10,9 +10,10 @@ import { AuthGuard } from 'src/auth/auth.guard';
 export class NewsController {
     constructor(private newsService: NewsService) { }
     @Get('all')
-    async getAllNews(@Query('page') page: number, @Query('limit') limit: number) {
-        return this.newsService.getAllNews(page, limit);
-    }
+    async getAllNews(@Query('page') page: number, @Query('limit') limit: number, @Query('isGetDraft', new DefaultValuePipe(true), ParseBoolPipe) isGetDraft:boolean) {
+        
+        return this.newsService.getAllNews(page, limit, isGetDraft);
+    }  
 
     @Get('search')
     async getArticlesBySearch(@Query('keySearch') q: string) {
@@ -30,7 +31,7 @@ export class NewsController {
     }
 
     @Put('checkCanUndo/:idUser')
-    async updateListArticleCanUndo(@Param("idUser") idUser:string){
+    async updateListArticleCanUndo(@Param("idUser") idUser: string) {
         return this.newsService.checkTimeUndoArticle(idUser);
     }
 
@@ -105,7 +106,7 @@ export class NewsController {
     }
 
 
-    
+
 
 
 

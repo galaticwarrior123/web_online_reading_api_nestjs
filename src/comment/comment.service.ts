@@ -40,7 +40,8 @@ export class CommentService {
 
     async create(commentCreateDto: CommentCreateDto): Promise<Comment> {
         const newComment = new this.commentModel(commentCreateDto);
-        return newComment.save();
+        const saved = await newComment.save();
+        return saved.populate("user");
     }
 
     async findBySlug(slug: string) {
@@ -77,7 +78,7 @@ export class CommentService {
                 }
             });
 
-            return roots;
+            return roots; 
         }
     }
 

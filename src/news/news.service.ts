@@ -357,10 +357,14 @@ export class NewsService {
         return updatedNews;
     }
 
-    async getAllNews(page: number = 1, limit: number = 10) {
+    async getAllNews(page: number = 1, limit: number = 10, isGetDraft: boolean) {
         const skip = (page - 1) * limit;
+        const query: any = {};
+        if (isGetDraft === false) {
+            query.status = { $ne: "draft" };
+        }
         const [items, total] = await Promise.all([
-            this.newsModel.find()
+            this.newsModel.find(query)
                 .populate('category')
                 .populate('author')
                 .skip(skip)
